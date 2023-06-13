@@ -1,7 +1,6 @@
 # 1. Common generic functions
 # 2. Functions about Cayley graphs
-# 3. TESTS
-# 4. G52 (NOT USED!)
+# 3. Test functions
 
 
 
@@ -13,24 +12,24 @@
 #--------------------------------------------------------------------------------------------------------------------------------------------
 
 
-
-def count_lines(fin_name): #counts the number of lines of a document
+def count_lines(fin_name, verbatim=False): #counts the number of lines of a document
     fin = open(fin_name,'r')
     line = fin.readline()
     cnt = 0
     while line:
         cnt += 1
-        print(cnt)
+        if verbatim:
+            print(cnt)
         line = fin.readline()
     fin.close()
     return cnt
     
-def digraph_endos(G, e, f, v=0):#generate only the digraph's endomporphisms that map some e to some c. We assume f is given such that f[e] = c, while the rest of f does not matter since it will be computed and overwritten. v states for the vertex we are analysing. We start with v = 0 and run through all the vertices until v=n. It gives all the possible endomorphisms f at the end when v reaches the order of G.
+def digraph_endos(G, e, f, v=0):#generate only the digraph's endomporphisms that map some e to some c. We assume f is given such that f[e] = c, while the rest of f does not matter since it will be computed and overwritten. v states for the vertex we are analysing. We start with v = 0 and run through all the vertices until v>n-1.
     n = G.order()
-    #stop if the function has run n times
+    #stop if we have computed all vertices from v=0 to v=n-1
     if v == n:
-        if not outdeg_bad(G,f): #check f is good before returning it
-            if not_invertible(G,f): #NEW: check that it is not invertible
+        if not outdeg_bad(G,f): #check the outdegree of f
+            if not_invertible(G,f): #check that f is not invertible
                 yield f
     else:
         #if we are at e we don't change anything
@@ -58,22 +57,22 @@ def digraph_endos(G, e, f, v=0):#generate only the digraph's endomporphisms that
             f[v] = 0
 
 # e candidates before adding loops, when filtering the list of orientations to discard the very bad ones
-def everybody_reachable_from_e(d, e_candidate):#checks all vertices w are reachable from e_candidate
+def everybody_reachable_from_e(d, e_candidate):#check that all vertices v are reachable from e_candidate
     for v in d.vertices(sort=True):
         if d.distance(e_candidate, v) > d.order():
             return False
     return True
 
-def there_is_e_candidate_G72_INV(d):
+def there_is_e_candidate_G72(d): #check if there is any e candidate (in the case of no invertible elements)
     for v in d.vertices(sort=True):
-        if d.out_degree(v) == 3 and d.in_degree(v) < 2: #because in C there can be at most one invertible generator
+        if d.out_degree(v) == 3 and d.in_degree(v) == 0:
             if everybody_reachable_from_e(d, v):
                 return True
     return False
-
-def there_is_e_candidate_G72(d):
+    
+def there_is_e_candidate_G72_INV(d): #check if there is any e candidate (in the case of one involution)
     for v in d.vertices(sort=True):
-        if d.out_degree(v) == 3 and d.in_degree(v) == 0: #because, as we have prooved, in C there cannot be any invertible generator
+        if d.out_degree(v) == 3 and d.in_degree(v) == 1:
             if everybody_reachable_from_e(d, v):
                 return True
     return False
@@ -99,42 +98,7 @@ def exist_endos_from_e(d, e): #checks that from e there is an endo to every othe
                 return False
     #if endos_list is not empty for any v, return True
     return True
-
-def good_autos_e(d, e, verbatim=True):#checks that the automorphisms that move e send loops to other existing loops in the graph. I think this never occurs, so this function is not necessary (?)
-    #for every automorphism of d that moves e
-    autos = d.automorphism_group().list()
-    for auto in autos:
-        if im_aut(auto,[e]) != [e]:
-            #for every loop
-            for x in d.edges(sort=True):
-                if x[0] == x[1]:
-                    #return false if the image of one loop (which is also a loop) is not an existing loop of the graph
-                    if not d.has_edge(auto(x[0]),auto(x[1])):
-                        if verbatim:
-                            print("good_autos_e found a bad auto for e =", e, "and d =", d.edges(sort=False))
-                        return False
-    return True
-
-#def e_good(d, e): #returns False if e_candidate does not accomplish one of the previous things. It assumes d already has loops
-#    if not everybody_reachable_from_e(d, e):
-#        return False
-#    if not exist_endos_from_e(d, e):
-#        return False
-#    if not good_autos_e(d,e):
-#        return False
-#    return True
-
-def find_e_candidates_G72_loops_INV(d): #d already has loops
-    candidates = []
-    for v in d.vertices(sort=False):
-        if v not in candidates:
-            if d.out_degree(v) == 3 and d.in_degree(v) < 2: #because in G72 there can be at most one invertible generator
-                if everybody_reachable_from_e(d, v):
-                    if exist_endos_from_e(d, v):
-                        if good_autos_e(d, v):
-                            candidates.append(v)
-    return candidates
-
+    
 def find_e_candidates_G72_loops(d): #d already has loops
     candidates = []
     for v in d.vertices(sort=False):
@@ -142,38 +106,48 @@ def find_e_candidates_G72_loops(d): #d already has loops
             if d.out_degree(v) == 3 and d.in_degree(v) == 0:
                 if everybody_reachable_from_e(d, v):
                     if exist_endos_from_e(d, v):
-                        if good_autos_e(d, v):
-                            candidates.append(v)
+                        candidates.append(v)
+    return candidates
+
+def find_e_candidates_G72_loops_INV(d): #d already has loops
+    candidates = []
+    for v in d.vertices(sort=False):
+        if v not in candidates:
+            if d.out_degree(v) == 3 and d.in_degree(v) == 1:
+                if everybody_reachable_from_e(d, v):
+                    if exist_endos_from_e(d, v):
+                        candidates.append(v)
     return candidates
 
 
+
 #Loops
-def add_loops(D, verbatim=False): # Add loops to multiorientations (we will have to add loops in the main function, because we can't add them to the data file since the .d6 format doesn't allow them). assumes digraph with 3 minimal generators (i.e. we want 3-outregular digraphs)
+def add_loops(D, verbatim=False): #Add loops to multiorientations. Assumes that |C|=3, since assumes maximum outdegree = 3.
     #save the vertices that have out_degree 1 or 2 before adding any loops
     vertices_outdeg_1_2 = []
     for v in D.vertices(sort=True):
         if D.out_degree(v) == 1 or D.out_degree(v) == 2:
             vertices_outdeg_1_2.append(v)
     #for all vertices with outdegree 0 add loop
-    D_essential_loops = DiGraph(D,loops=True) #alternatively we could do D_essential_loops = D and then D_essential_loops.allow_loops(True) (is there any difference?) Do we need to do a copy of D like DiGraph(D.copy(),loops=True) ?
+    D_essential_loops = DiGraph(D,loops=True)
     for v in D_essential_loops.vertices(sort=True):
         if D_essential_loops.out_degree(v) == 0:
             D_essential_loops.add_edge(v, v)
     #for some vertices with outdegree 1 or 2 add loop. Tries all possible subsets of vertices (using powerset) and returns all possible resulting digraphs
-    done = [] #maybe change to a set
+    done = []
     for V in powerset(vertices_outdeg_1_2):
         if verbatim:
             print("done =", done)
         #if we have not done an isomorphic set, do it
-        if V not in done: #gives error if done is a set (?)
+        if V not in done:
             if verbatim:
                 print("V =", V)
-            D_loops = D_essential_loops.copy() #very important to put .copy()
+            D_loops = D_essential_loops.copy()
             for v in V:
                 D_loops.add_edge(v, v)
             yield D_loops
             #add to done all subsets isomorphic to V
-            for phi in D.automorphism_group().list(): #automorfismos del grafo antes de añadir los loops
+            for phi in D.automorphism_group().list(): #automorphisms of the graph BEFORE adding loops
                 phi_of_V = im_aut(phi,V)
                 if phi_of_V not in done:
                     done.append(phi_of_V)
@@ -200,7 +174,7 @@ def underlying_graph(G): #make H the underlying graph of G
             H.add_edge((e[1], e[0]))
     return H
 
-def cayley_graph(S, C, directed=False, verbatim=False): #ONLY VALID IF THERE ARE NO REPEATED ROWS IN THE TABLE! i.e. we assume S has n distinct endos of size n. i.e. is this condition always fulfilled by monoids? #Give the Cayley graph (not like a normal graph) given S and C, where S is a set of endos (it is assumed to have n endos of size n) and C is a set of of indices between 0 and len(S)-1. The output can have loops but not repeated edges
+def cayley_graph(S, C, directed=False, verbatim=False): #Give the Cayley graph (not like a normal graph) given S and C, where M is a set of endos (it is assumed to have n distinct endos of size n, so not valid for all semigroups but it is valid for all monoids) and C is a set of of indices between 0 and len(M)-1. The output can have loops but not repeated edges
     n = len(S)
     order_of_C = len(C)
     if verbatim:
@@ -213,7 +187,7 @@ def cayley_graph(S, C, directed=False, verbatim=False): #ONLY VALID IF THERE ARE
     #add vertices and associate them with the elements of S
     for i in range(n):
         G.add_vertex(i)
-        G.set_vertex(i,S[i]) #the function set_vertex associates an arbitrary object with a vertex. here we use it to store S in the vertices for us to recover S if we need it (using function semigroupfromcayley). it's not that vertex i is related to S[i], it's just a place to store information.
+        G.set_vertex(i, S[i]) #the function set_vertex associates an arbitrary object with a vertex. here we use it to store S in the vertices for us to recover S if we need it (using function semigroupfromcayley).
     #add edge i->m if m=i*c for some c in C, i.e. if S[m] = comp(S[i],S[c])
     for i in range(n):
         for j in C:
@@ -225,20 +199,6 @@ def cayley_graph(S, C, directed=False, verbatim=False): #ONLY VALID IF THERE ARE
                         print("[", i, ",", m, "]")
                     break
     return G
-
-def semigroupfromcayley_WRONG(G): #Give the semigroup S given a cayley graph G (see function cayley_graph)
-    n = G.order()
-    #initialize a multiplication table full of zeros
-    mtable = [[0 for _ in range(n)] for _ in range(n)]
-    #fill in the table looking at the graph (?)
-    for i in range(n):
-        for j in range(n):
-            x = comp(G.get_vertex(i), G.get_vertex(j))
-            for m in range(n):
-                if G.get_vertex(m) == x:
-                    mtable[i][j] = m
-                    break
-    return mtable
 
 def semigroupfromcayley(G): #Give the semigroup S given a cayley graph G (see function cayley_graph)
     return [G.get_vertex(i) for i in range(G.order())]
@@ -606,105 +566,10 @@ def tests_colors():
 
 
 def tests():
-    list_of_tests = [test_G52_monoids(), test_G62_monoids() , test_aut(), test_loops(), tests_colors()]
+    list_of_tests = [test_G52_monoids(), test_G62_monoids() , test_aut(), test_loops()]
     m = len(list_of_tests)
     for i in range(m):
         if not list_of_tests[i]:
             print("Test", i, "failed")
             return False
     return True
-
-
-#WE NEED TO TEST THE ENDOS GENERATORS
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#--------------------------------------------------------------------------------------------------------------------------------------------
-#   4  NOT USED!
-#--------------------------------------------------------------------------------------------------------------------------------------------
-
-def there_is_e_candidate_G52(D):
-    for v in D.vertices(sort=True):
-        if D.out_degree(v) == 3 and D.in_degree(v) < 3: #because there can be at most two invertible generators
-            bad = False
-            for w in D.vertices(sort=True):
-                if D.distance(v, w) > D.order(): #w is not reachable from v
-                    bad = True
-                    break
-            if not bad:
-                return True
-    return False
-
-def find_e_candidates_G52(D):
-    candidates = []
-    for v in D.vertices(sort=True):
-        if v not in candidates: #this shouldn't be necessary
-            if D.out_degree(v) == 3 and D.in_degree(v) < 3: #because in C there can be at most two invertible generators
-                bad = False
-                for w in D.vertices(sort=True):
-                    if D.distance(v, w) > D.order(): #w is not reachable from v
-                        bad = True
-                if not bad:
-                    candidates.append(v)
-    return candidates
-
-def filter_the_ors_G52():#take all (bi)orintations and filter those that have outdegree<=3 (automatically true if max degree 3) and one vertex with three different out-neighbours such that everybody is reachable from it
-    fin = open('G52_multiors.d6', 'r')
-    fout = open('G52_multiors_less.d6', 'w')
-    line = fin.readline()
-    cnt = 1
-    while line:
-        fixed_line = line[1:] #for some reason all start with &, which is bad
-        D = DiGraph(fixed_line, multiedges=True) #alternatively D=DiGraph(), D.allow_multiple_edges(True), D=DiGraph(fixed_line)
-        if there_is_e_candidate_G52(D): #currently only multiors
-            fout.write(fixed_line)
-        line = fin.readline()
-        cnt += 1
-    fin.close()
-    fout.close()
-
-def is_G52_monoid(verbatim=False): #put loops and check monoid
-    #read file with multiorientations of G52
-    fin = open('G52_multiors_less.d6', 'r')
-    line = fin.readline()
-    cnt = 1
-    #for each possible multiorientation
-    while line:
-        if verbatim:
-            print("----------------------------------------------------------------------------------------------------------------------")
-            print("----------------------------------------------------------------------------------------------------------------------")
-        print("Checking multiorientation", cnt, "of 113909")
-        if verbatim:
-            print("Multiorientation in format d6:", line)
-        D = DiGraph(line,multiedges=True)
-        LIST_OF_D_WITH_LOOPS = add_loops(D)
-        for d in LIST_OF_D_WITH_LOOPS:
-            #for each neutral element candidate
-            e_candidates = find_e_candidates_G72_loops(d) #d with loops
-            if verbatim:
-                print("-----------------------------------------------------------")
-                print("New way to add loops. The neutral element candidates are", e_candidates)
-            for e in e_candidates:
-                if verbatim:
-                    print("e =", e)
-                #check if it is a monoid digraph
-                if check_monoid_INV(d, e): #CHANGE THIS TO INCLUDE 2-GENERATED MONOIDS (?)
-                    return True
-                if verbatim:
-                    print("Not a monoid digraph.")
-        line = fin.readline()
-        cnt += 1
-    fin.close()
-    return False

@@ -329,14 +329,6 @@ def cycles_good(d, e, verbatim=False): #z is cycle length and l is cycle maximum
                         if l > l_e:
                             return False
     return True
-    
-    
-    
-    
-
-
-#function that discards colorations with automorphisms (no invertible elements => no automorphisms other than id) (?)
-#...
 
 
 
@@ -460,15 +452,14 @@ def check_monoid_colors_notgen(d, e, verbatim=True): #case C does not genretate 
             print("C =", C)
             print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             return True
-    
     return False
 
-def MAIN_approach2(initial_line=1, step=1, verbatim=True, verbatim2=False): #puts loops, puts colors and checks monoid
+def MAIN_approach2(initial_line=1, step=1, verbatim=False, verbatim2=False): #puts loops, puts colors and checks monoid
     import time
-    t2 = time.perf_counter()
+    t1 = time.perf_counter()
     n = 14
     k = 3
-    cnt = 0
+    cnt_multiors = 0
     cnt_multiors_total = 240088032 #count_lines(fin) takes several minutes so I did it in advance and wrote the result here
     real_cnt = 0
     #read file with multiorientations of G72
@@ -476,11 +467,11 @@ def MAIN_approach2(initial_line=1, step=1, verbatim=True, verbatim2=False): #put
     line = fin.readline()
     #for every possible multiorientation
     while line:
-        cnt += 1
-        if cnt % step == initial_line % step:
+        cnt_multiors += 1
+        if cnt_multiors % step == initial_line % step:
             real_cnt += 1
-            print("Multiorientation", cnt, "/", cnt_multiors_total)
-            D = DiGraph(line,multiedges=True) #alternatively we could first do D = DiGraph(), then D.allow_multiple_edges(True) and then D = DiGraph(line)
+            print("Multiorientation", cnt_multiors, "/", cnt_multiors_total)
+            D = DiGraph(line,multiedges=True)
             #for every possible addition of loops
             LIST_OF_D_WITH_LOOPS = add_loops(D)
             cnt_loops = 0
@@ -923,14 +914,15 @@ def MAIN_approach2_INV(verbatim=False): #put loops symmetrically, put colors sym
     refl = g[1] #the involution
     freevertices = [4, 5, 6, 7, 11, 12, 13] #those that can have loops (and then per symmetry determine the rest)
     fin = open('G72involution.d6', 'r')
+    number_of_lines = count_lines('G72involution.d6')
     fout = open('AA_output_MAIN_approach2_INV.txt', 'w')
     lines = fin.readlines()
     counter = 0
     counter_2 = 0
     for l in lines:
         counter += 1
-        print("Checking line", counter, "of 1248")
-        D = DiGraph(l, multiedges=True, loops=True) #alternatively we could do D=DiGraph(l), D.allow_multiple_edges(True), D.allow_loops(True)
+        print("Checking line", counter, "of", number_of_lines)
+        D = DiGraph(l, multiedges=True, loops=True)
         #put loops symmetrically
         for H in add_loops_INV(D, refl, freevertices):
             if len(H.loops()) > 0: #since G72 is a core, we know that there have to be loops when non-group semigroup graph
@@ -953,7 +945,7 @@ def MAIN_approach2_INV(verbatim=False): #put loops symmetrically, put colors sym
                             print("Not a monoid digraph.")
                             print("")
     fin.close()
-    print("Number of digraphs analized:", counter_2)
+    print("Number of looped digraphs analized:", counter_2)
     t2 = time.perf_counter()
     print("Computation time:", t2-t1, "seconds")
     return False
@@ -969,14 +961,15 @@ def MAIN_approach2_INV_2(verbatim=False): #put loops symmetrically, put colors s
     refl = g[1] #the involution
     freevertices = [0, 4, 5, 6, 7, 11, 13] #those that can have loops (and then per symmetry determine the rest)
     fin = open('G72involution_2.d6', 'r')
+    number_of_lines = count_lines('G72involution_2.d6')
     fout = open('AA_output_MAIN_approach2_INV_2.txt', 'w')
     lines = fin.readlines()
     counter = 0
     counter_2 = 0
     for l in lines:
         counter += 1
-        print("Checking line", counter, "of 528")
-        D = DiGraph(l, multiedges=True, loops=True) #alternatively we could do D=DiGraph(l), D.allow_multiple_edges(True), D.allow_loops(True)
+        print("Checking line", counter, "of", number_of_lines)
+        D = DiGraph(l, multiedges=True, loops=True)
         #put loops symmetrically
         for H in add_loops_INV(D, refl, freevertices):
             if len(H.loops()) > 0: #since G72 is a core, we know that there have to be loops when non-group semigroup graph
@@ -999,7 +992,7 @@ def MAIN_approach2_INV_2(verbatim=False): #put loops symmetrically, put colors s
                             print("Not a monoid digraph.")
                             print("")
     fin.close()
-    print("Number of digraphs analized:", counter_2)
+    print("Number of looped digraphs analized:", counter_2)
     t2 = time.perf_counter()
     print("Computation time:", t2-t1, "seconds")
     return False
@@ -1014,15 +1007,16 @@ def MAIN_approach2_INV_notgen(verbatim=False): #put loops symmetrically, put col
     g = D.automorphism_group() #order 2
     refl = g[1] #the involution
     freevertices = [4, 5, 6, 7, 11, 12, 13] #those that can have loops (and then per symmetry determine the rest)
-    fin = open('G72involution.d6', 'r')
+    fin = open('G72involution_notgen.d6', 'r')
+    number_of_lines = count_lines('G72involution_notgen.d6')
     fout = open('AA_output_MAIN_approach2_INV_notgen.txt', 'w')
     lines = fin.readlines()
     counter = 0
     counter_2 = 0
     for l in lines:
         counter += 1
-        print("Checking line", counter, "of 1248")
-        D = DiGraph(l, multiedges=True, loops=True) #alternatively we could do D=DiGraph(l), D.allow_multiple_edges(True), D.allow_loops(True)
+        print("Checking line", counter, "of", number_of_lines)
+        D = DiGraph(l, multiedges=True, loops=True)
         #put loops symmetrically
         for H in add_loops_INV(D, refl, freevertices):
             if len(H.loops()) > 0: #since G72 is a core, we know that there have to be loops when non-group semigroup graph
@@ -1045,7 +1039,7 @@ def MAIN_approach2_INV_notgen(verbatim=False): #put loops symmetrically, put col
                             print("Not a monoid digraph.")
                             print("")
     fin.close()
-    print("Number of digraphs analized:", counter_2)
+    print("Number of looped digraphs analized:", counter_2)
     t2 = time.perf_counter()
     print("Computation time:", t2-t1, "seconds")
     return False
@@ -1061,15 +1055,16 @@ def MAIN_approach2_INV_notgen_2(verbatim=False): #put loops symmetrically, put c
     g = D.automorphism_group() #order 2
     refl = g[1] #the involution
     freevertices = [0, 4, 5, 6, 7, 11, 13] #those that can have loops (and then per symmetry determine the rest)
-    fin = open('G72involution_2.d6', 'r')
+    fin = open('G72involution_notgen_2.d6', 'r')
+    number_of_lines = count_lines('G72involution_notgen_2.d6')
     fout = open('AA_output_MAIN_approach2_INV_notgen_2.txt', 'w')
     lines = fin.readlines()
     counter = 0
     counter_2 = 0
     for l in lines:
         counter += 1
-        print("Checking line", counter, "of 528")
-        D = DiGraph(l, multiedges=True, loops=True) #alternatively we could do D=DiGraph(l), D.allow_multiple_edges(True), D.allow_loops(True)
+        print("Checking line", counter, "of", number_of_lines)
+        D = DiGraph(l, multiedges=True, loops=True)
         #put loops symmetrically
         for H in add_loops_INV(D, refl, freevertices):
             if len(H.loops()) > 0: #since G72 is a core, we know that there have to be loops when non-group semigroup graph
@@ -1092,7 +1087,7 @@ def MAIN_approach2_INV_notgen_2(verbatim=False): #put loops symmetrically, put c
                             print("Not a monoid digraph.")
                             print("")
     fin.close()
-    print("Number of digraphs analized:", counter_2)
+    print("Number of looped digraphs analized:", counter_2)
     t2 = time.perf_counter()
     print("Computation time:", t2-t1, "seconds")
     return False
